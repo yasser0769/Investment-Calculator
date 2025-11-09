@@ -1,9 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Investment Calculator</title>
+
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -38,6 +34,7 @@
       justify-content: center;
       align-items: center;
       padding: 40px 16px;
+
     }
 
     .calculator-container {
@@ -57,11 +54,7 @@
       width: 320px;
       height: 320px;
       top: -160px;
-      right: -160px;
-      background: radial-gradient(circle, rgba(75, 123, 236, 0.18), transparent 60%);
-      z-index: 0;
-      pointer-events: none;
-      transform: rotate(12deg);
+
     }
 
     .calculator-container::after {
@@ -70,11 +63,7 @@
       width: 260px;
       height: 260px;
       bottom: -140px;
-      left: -120px;
-      background: radial-gradient(circle, rgba(111, 66, 193, 0.16), transparent 60%);
-      z-index: 0;
-      pointer-events: none;
-      transform: rotate(-18deg);
+
     }
 
     header {
@@ -96,7 +85,7 @@
       color: var(--muted);
       max-width: 640px;
       margin: 0 auto;
-      line-height: 1.6;
+
     }
 
     form {
@@ -126,6 +115,7 @@
       background: #fdfdff;
       font-size: 1rem;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
     }
 
     .input-group input:focus {
@@ -192,11 +182,7 @@
     }
 
     .summary-card span.label {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+
     }
 
     .summary-card span.value {
@@ -220,7 +206,7 @@
     }
 
     th, td {
-      text-align: left;
+
       padding: 16px 20px;
       font-size: 0.95rem;
     }
@@ -280,46 +266,19 @@
 <body>
   <main class="calculator-container">
     <header>
-      <h1>Investment Calculator</h1>
-      <p class="subtitle">Quickly estimate the future value of your investments with monthly contributions and see how compound interest accelerates your growth.</p>
+
     </header>
 
     <form id="investmentForm">
       <div class="form-grid">
         <div class="input-group">
-          <label for="initialAmount">Initial Investment Amount</label>
-          <input type="number" id="initialAmount" name="initialAmount" min="0" placeholder="e.g. 10,000">
-        </div>
-        <div class="input-group">
-          <label for="monthlyContribution">Monthly Contribution</label>
-          <input type="number" id="monthlyContribution" name="monthlyContribution" min="0" placeholder="e.g. 500">
-        </div>
-        <div class="input-group">
-          <label for="years">Investment Duration (years)</label>
-          <input type="number" id="years" name="years" min="1" placeholder="e.g. 10">
-        </div>
-        <div class="input-group">
-          <label for="rate">Annual Interest Rate (%)</label>
-          <input type="number" id="rate" name="rate" step="0.1" placeholder="e.g. 8" value="8">
-        </div>
-      </div>
-      <button type="submit" class="primary-button">Calculate</button>
-      <p class="error-message" id="errorMessage">Please fill in all fields with valid numbers.</p>
+
     </form>
 
     <section class="results" id="results" hidden>
       <div class="summary-cards">
         <div class="summary-card">
-          <span class="label">Total Invested</span>
-          <span class="value" id="totalInvestedValue">$0.00</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Final Value</span>
-          <span class="value" id="finalValue">$0.00</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Total Interest Earned</span>
-          <span class="value" id="totalInterest">$0.00</span>
+
         </div>
       </div>
 
@@ -327,9 +286,7 @@
         <table>
           <thead>
             <tr>
-              <th>Year</th>
-              <th>Total Invested by Year</th>
-              <th>Portfolio Value</th>
+
             </tr>
           </thead>
           <tbody id="yearlyTableBody"></tbody>
@@ -343,9 +300,7 @@
   </main>
 
   <script>
-    // Helper to format currency consistently
-    const formatCurrency = (value) =>
-      value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 
     const form = document.getElementById('investmentForm');
     const errorMessage = document.getElementById('errorMessage');
@@ -360,7 +315,7 @@
     form.addEventListener('submit', (event) => {
       event.preventDefault();
 
-      // Parse and validate inputs
+
       const initial = parseFloat(form.initialAmount.value);
       const monthly = parseFloat(form.monthlyContribution.value);
       const years = parseInt(form.years.value, 10);
@@ -400,12 +355,7 @@
       const finalPortfolioValue = yearlyBalances[yearlyBalances.length - 1] || balance;
       const totalInterestEarned = finalPortfolioValue - totalInvested;
 
-      // Update summary cards
-      totalInvestedValue.textContent = `$${formatCurrency(totalInvested)}`;
-      finalValue.textContent = `$${formatCurrency(finalPortfolioValue)}`;
-      totalInterest.textContent = `$${formatCurrency(totalInterestEarned)}`;
 
-      // Build yearly table rows
       yearlyTableBody.innerHTML = '';
       yearlyBalances.forEach((value, index) => {
         const row = document.createElement('tr');
@@ -414,14 +364,13 @@
         const valueCell = document.createElement('td');
 
         yearCell.textContent = index + 1;
-        investedCell.textContent = `$${formatCurrency(yearlyInvested[index])}`;
-        valueCell.textContent = `$${formatCurrency(value)}`;
+
 
         row.append(yearCell, investedCell, valueCell);
         yearlyTableBody.appendChild(row);
       });
 
-      // Prepare data for the chart
+
       const labels = yearlyBalances.map((_, index) => index + 1);
       const data = yearlyBalances;
 
@@ -429,7 +378,7 @@
         labels,
         datasets: [
           {
-            label: 'Portfolio Value',
+
             data,
             borderColor: 'rgba(75, 123, 236, 1)',
             backgroundColor: 'rgba(75, 123, 236, 0.16)',
@@ -445,11 +394,12 @@
       const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
+
         scales: {
           x: {
             title: {
               display: true,
-              text: 'Year',
+
               color: varAccentColor(),
               font: { size: 12, family: 'IBM Plex Sans' }
             },
@@ -464,14 +414,14 @@
           y: {
             title: {
               display: true,
-              text: 'Portfolio Value ($)',
+
               color: varAccentColor(),
               font: { size: 12, family: 'IBM Plex Sans' }
             },
             ticks: {
               color: '#4d5674',
               font: { family: 'IBM Plex Sans' },
-              callback: (value) => `$${Number(value).toLocaleString('en-US')}`
+
             },
             grid: {
               color: 'rgba(75, 123, 236, 0.06)'
@@ -480,16 +430,14 @@
         },
         plugins: {
           legend: {
+
             labels: {
               color: '#1f2742',
               font: { family: 'IBM Plex Sans', weight: '500' }
             }
           },
           tooltip: {
-            callbacks: {
-              label: (context) => {
-                const value = context.parsed.y;
-                return `Portfolio Value: $${formatCurrency(value)}`;
+
               }
             }
           }
@@ -509,7 +457,7 @@
         });
       }
 
-      // Reveal results and smoothly scroll into view
+
       resultsSection.hidden = false;
       resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
