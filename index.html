@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حاسبة الاستثمار</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --background: #f6f7fb;
+      --gradient-start: #e0ecff;
+      --gradient-end: #f5e9ff;
+      --card-bg: #ffffff;
+      --text-dark: #1f2742;
+      --muted: #5a6485;
+      --accent: #4b7bec;
+      --accent-dark: #3459a7;
+      --error: #d64550;
+      --border-radius: 22px;
+      --shadow: 0 24px 55px rgba(31, 39, 66, 0.12);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'IBM Plex Sans', sans-serif;
+      line-height: 1.7;
+      background:
+        radial-gradient(120% 120% at 10% 10%, rgba(75, 123, 236, 0.22), transparent),
+        radial-gradient(100% 140% at 90% 0%, rgba(111, 66, 193, 0.18), transparent),
+        linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    main.calculator-container {
+      width: min(100%, 980px);
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: clamp(32px, 5vw, 56px);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    main.calculator-container::before,
+    main.calculator-container::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    main.calculator-container::before {
+      width: 320px;
+      height: 320px;
+      top: -160px;
+      left: -160px;
+      background: radial-gradient(circle, rgba(75, 123, 236, 0.18), transparent 60%);
+      transform: rotate(-12deg);
+    }
+
+    main.calculator-container::after {
+      width: 260px;
+      height: 260px;
+      bottom: -140px;
+      right: -120px;
+      background: radial-gradient(circle, rgba(111, 66, 193, 0.16), transparent 60%);
+      transform: rotate(18deg);
+    }
+
+    header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 3vw + 1rem, 3rem);
+      font-weight: 600;
+      letter-spacing: -0.4px;
+    }
+
+    p.subtitle {
+      margin: 0 auto;
+      max-width: 640px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    form {
+      display: grid;
+      gap: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    input[type='number'] {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(31, 39, 66, 0.12);
+      background: #fdfdff;
+      font-size: 1rem;
+      color: inherit;
+      text-align: right;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    input[type='number']::placeholder {
+      color: rgba(31, 39, 66, 0.42);
+    }
+
+    input[type='number']:focus,
+    input[type='number']:focus-visible {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(75, 123, 236, 0.18);
+      background: #fff;
+    }
+
+    button.primary-button {
+      justify-self: start;
+      padding: 14px 26px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    button.primary-button:hover {
+      background: var(--accent-dark);
+      box-shadow: 0 12px 25px rgba(75, 123, 236, 0.26);
+      transform: translateY(-1px);
+    }
+
+    button.primary-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 6px 16px rgba(75, 123, 236, 0.18);
+    }
+
+    button.primary-button:focus-visible {
+      outline: 3px solid rgba(75, 123, 236, 0.45);
+      outline-offset: 3px;
+    }
+
+    .error-message {
+      color: var(--error);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .results {
+      margin-top: 40px;
+      display: grid;
+      gap: 28px;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, rgba(75, 123, 236, 0.08), rgba(255, 255, 255, 0.9));
+      border-radius: 18px;
+      padding: 24px;
+      border: 1px solid rgba(31, 39, 66, 0.08);
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-card span.label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .summary-card span.value {
+      font-size: clamp(1.2rem, 1.2vw + 1rem, 1.6rem);
+      font-weight: 600;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 18px;
+      box-shadow: inset 0 0 0 1px rgba(31, 39, 66, 0.06);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 520px;
+    }
+
+    caption {
+      caption-side: top;
+      text-align: right;
+      padding: 16px 20px 0;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    thead {
+      background: rgba(75, 123, 236, 0.12);
+    }
+
+    th,
+    td {
+      text-align: right;
+      padding: 16px 20px;
+      font-size: 0.95rem;
+    }
+
+    th {
+      font-weight: 600;
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(75, 123, 236, 0.06);
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      min-height: 320px;
+      padding: clamp(16px, 4vw, 24px);
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 20px;
+      box-shadow: inset 0 0 0 1px rgba(31, 39, 66, 0.06);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 32px 12px;
+      }
+
+      button.primary-button {
+        justify-self: stretch;
+      }
+
+      header {
+        text-align: right;
+      }
+
+      .results {
+        gap: 24px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main.calculator-container {
+        padding: 28px 20px;
+      }
+
+      h1 {
+        font-size: 2.1rem;
+      }
+
+      p.subtitle {
+        font-size: 1rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator-container">
+    <header>
+      <h1>حاسبة الاستثمار</h1>
+      <p class="subtitle">احسب القيمة المستقبلية لاستثماراتك مع المساهمات الشهرية وشاهد كيف يعزز التراكم المركب نمو أموالك.</p>
+    </header>
+
+    <form id="investmentForm" novalidate>
+      <div class="form-grid">
+        <div class="input-group">
+          <label for="initialAmount">قيمة الاستثمار الابتدائية</label>
+          <input type="number" id="initialAmount" name="initialAmount" min="0" inputmode="decimal" placeholder="مثال: 10000">
+        </div>
+        <div class="input-group">
+          <label for="monthlyContribution">المساهمة الشهرية</label>
+          <input type="number" id="monthlyContribution" name="monthlyContribution" min="0" inputmode="decimal" placeholder="مثال: 500">
+        </div>
+        <div class="input-group">
+          <label for="years">مدة الاستثمار (بالسنوات)</label>
+          <input type="number" id="years" name="years" min="1" step="1" inputmode="numeric" placeholder="مثال: 10">
+        </div>
+        <div class="input-group">
+          <label for="rate">معدل الفائدة السنوي (%)</label>
+          <input type="number" id="rate" name="rate" step="0.1" inputmode="decimal" placeholder="مثال: 8" value="8">
+        </div>
+      </div>
+      <button type="submit" class="primary-button">احسب</button>
+      <p class="error-message" id="errorMessage" role="alert" aria-live="assertive">يرجى إدخال قيم صحيحة في جميع الحقول.</p>
+    </form>
+
+    <section class="results" id="results" hidden aria-hidden="true">
+      <div class="summary-cards" aria-live="polite">
+        <div class="summary-card">
+          <span class="label">إجمالي المبلغ المستثمر</span>
+          <span class="value" id="totalInvestedValue">0.00 دولار</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">القيمة النهائية</span>
+          <span class="value" id="finalValue">0.00 دولار</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">إجمالي العائد من الفوائد</span>
+          <span class="value" id="totalInterest">0.00 دولار</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table aria-describedby="tableCaption">
+          <caption id="tableCaption">ملخص سنوي لتراكم الاستثمار</caption>
+          <thead>
+            <tr>
+              <th scope="col">السنة</th>
+              <th scope="col">إجمالي الاستثمار حتى السنة</th>
+              <th scope="col">قيمة المحفظة</th>
+            </tr>
+          </thead>
+          <tbody id="yearlyTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="investmentChart" aria-label="مخطط يوضح نمو المحفظة الاستثمارية" role="img"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DEFAULT_RATE = 8;
+    const LOCALE = 'ar-EG';
+    const CURRENCY_SUFFIX = ' دولار';
+
+    const form = document.getElementById('investmentForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const resultsSection = document.getElementById('results');
+    const totalInvestedValue = document.getElementById('totalInvestedValue');
+    const finalValue = document.getElementById('finalValue');
+    const totalInterest = document.getElementById('totalInterest');
+    const yearlyTableBody = document.getElementById('yearlyTableBody');
+
+    let investmentChart = null;
+
+    const formatCurrency = (value) =>
+      Number(value).toLocaleString(LOCALE, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const values = readFormValues();
+      if (!values) {
+        displayError(true);
+        hideResults();
+        return;
+      }
+
+      displayError(false);
+
+      const calculations = calculateInvestmentGrowth(values);
+      renderSummaries(calculations);
+      populateYearlyTable(calculations);
+      renderChart(calculations);
+      revealResults();
+    });
+
+    function readFormValues() {
+      const initial = Number.parseFloat(form.initialAmount.value);
+      const monthly = Number.parseFloat(form.monthlyContribution.value);
+      const years = Number.parseInt(form.years.value, 10);
+      const rateInput = form.rate.value.trim() === '' ? DEFAULT_RATE : Number.parseFloat(form.rate.value);
+
+      const isInitialValid = Number.isFinite(initial) && initial >= 0;
+      const isMonthlyValid = Number.isFinite(monthly) && monthly >= 0;
+      const isYearsValid = Number.isFinite(years) && years >= 1;
+      const isRateValid = Number.isFinite(rateInput);
+
+      if (!isInitialValid || !isMonthlyValid || !isYearsValid || !isRateValid) {
+        return null;
+      }
+
+      return { initial, monthly, years, rate: rateInput };
+    }
+
+    function calculateInvestmentGrowth({ initial, monthly, years, rate }) {
+      const months = years * 12;
+      const monthlyRate = rate / 100 / 12;
+      const yearlyBalances = [];
+      const yearlyInvested = [];
+
+      let balance = initial;
+
+      for (let month = 1; month <= months; month += 1) {
+        balance *= (1 + monthlyRate);
+        balance += monthly;
+
+        if (month % 12 === 0) {
+          const yearIndex = month / 12;
+          yearlyBalances.push(balance);
+          yearlyInvested.push(initial + monthly * month);
+        }
+      }
+
+      const totalInvested = initial + monthly * months;
+      const finalPortfolioValue = yearlyBalances.at(-1) ?? balance;
+      const totalInterestEarned = finalPortfolioValue - totalInvested;
+
+      return {
+        yearlyBalances,
+        yearlyInvested,
+        totalInvested,
+        finalPortfolioValue,
+        totalInterestEarned,
+        years
+      };
+    }
+
+    function renderSummaries({ totalInvested, finalPortfolioValue, totalInterestEarned }) {
+      totalInvestedValue.textContent = `${formatCurrency(totalInvested)}${CURRENCY_SUFFIX}`;
+      finalValue.textContent = `${formatCurrency(finalPortfolioValue)}${CURRENCY_SUFFIX}`;
+      totalInterest.textContent = `${formatCurrency(totalInterestEarned)}${CURRENCY_SUFFIX}`;
+    }
+
+    function populateYearlyTable({ yearlyBalances, yearlyInvested }) {
+      yearlyTableBody.innerHTML = '';
+
+      yearlyBalances.forEach((value, index) => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${formatCurrency(yearlyInvested[index])}${CURRENCY_SUFFIX}</td>
+          <td>${formatCurrency(value)}${CURRENCY_SUFFIX}</td>
+        `;
+
+        yearlyTableBody.appendChild(row);
+      });
+    }
+
+    function renderChart({ yearlyBalances }) {
+      const labels = yearlyBalances.map((_, index) => index + 1);
+
+      const chartData = {
+        labels,
+        datasets: [
+          {
+            label: 'قيمة المحفظة',
+            data: yearlyBalances,
+            borderColor: 'rgba(75, 123, 236, 1)',
+            backgroundColor: 'rgba(75, 123, 236, 0.16)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      };
+
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        locale: LOCALE,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'السنة',
+              color: getAccentColor(),
+              font: { size: 12, family: 'IBM Plex Sans' }
+            },
+            ticks: {
+              color: '#4d5674',
+              font: { family: 'IBM Plex Sans' }
+            },
+            grid: {
+              color: 'rgba(75, 123, 236, 0.08)'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'قيمة المحفظة (دولار)',
+              color: getAccentColor(),
+              font: { size: 12, family: 'IBM Plex Sans' }
+            },
+            ticks: {
+              color: '#4d5674',
+              font: { family: 'IBM Plex Sans' },
+              callback: (value) => formatCurrency(value)
+            },
+            grid: {
+              color: 'rgba(75, 123, 236, 0.06)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            rtl: true,
+            labels: {
+              color: '#1f2742',
+              font: { family: 'IBM Plex Sans', weight: '500' },
+              textDirection: 'rtl'
+            }
+          },
+          tooltip: {
+            rtl: true,
+            titleAlign: 'right',
+            bodyAlign: 'right',
+            callbacks: {
+              label: (context) => {
+                const value = context.parsed.y;
+                return `قيمة المحفظة: ${formatCurrency(value)}${CURRENCY_SUFFIX}`;
+              }
+            }
+          }
+        }
+      };
+
+      if (investmentChart) {
+        investmentChart.data = chartData;
+        investmentChart.options = chartOptions;
+        investmentChart.update();
+        return;
+      }
+
+      const ctx = document.getElementById('investmentChart').getContext('2d');
+      investmentChart = new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: chartOptions
+      });
+    }
+
+    function displayError(shouldShow) {
+      errorMessage.style.display = shouldShow ? 'block' : 'none';
+    }
+
+    function hideResults() {
+      resultsSection.hidden = true;
+      resultsSection.setAttribute('aria-hidden', 'true');
+    }
+
+    function revealResults() {
+      resultsSection.hidden = false;
+      resultsSection.setAttribute('aria-hidden', 'false');
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function getAccentColor() {
+      return getComputedStyle(document.documentElement)
+        .getPropertyValue('--accent')
+        .trim() || '#4b7bec';
+    }
+  </script>
+</body>
+</html>
