@@ -1,1 +1,544 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حاسبة الاستثمار</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-gradient-start: #f7f9fc;
+      --bg-gradient-end: #e3ebf7;
+      --card-bg: #ffffff;
+      --text-dark: #1f2d3d;
+      --muted-text: #4b5d73;
+      --accent: #3465d9;
+      --accent-dark: #274aa6;
+      --error: #d9534f;
+      --shadow: 0 20px 50px rgba(41, 72, 152, 0.15);
+      --radius: 24px;
+    }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      background: radial-gradient(circle at top right, var(--bg-gradient-start), var(--bg-gradient-end));
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 1000px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .subtitle {
+      margin: 12px 0 0;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: var(--muted-text);
+      text-align: right;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    input[type="number"] {
+      padding: 14px 16px;
+      border: 1px solid #d0d7e6;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: #f9fbff;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(52, 101, 217, 0.15);
+    }
+
+    .actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(52, 101, 217, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-dark);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #e6ebf7;
+      color: var(--accent-dark);
+    }
+
+    .btn-secondary:disabled {
+      background: #c8d2eb;
+      color: #6f7fa6;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-secondary:not(:disabled):hover {
+      background: #d4dcf2;
+      transform: translateY(-2px);
+    }
+
+    .error-message {
+      color: var(--error);
+      font-weight: 500;
+      margin-top: -8px;
+    }
+
+    .results {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .summary-card {
+      background: #f6f8fc;
+      border-radius: 20px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .summary-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .summary-label {
+      font-size: 1rem;
+      color: var(--muted-text);
+    }
+
+    .summary-value {
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+
+    .table-card,
+    .chart-card {
+      background: #fefeff;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: inset 0 0 0 1px rgba(44, 62, 80, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: right;
+    }
+
+    thead {
+      background: #eef2fb;
+    }
+
+    th, td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #e2e8f5;
+      font-size: 0.95rem;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .chart-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    @media (max-width: 900px) {
+      .card {
+        padding: 32px;
+      }
+
+      form {
+        grid-template-columns: 1fr;
+      }
+
+      .results {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+
+      .card {
+        padding: 24px;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <main class="card">
+      <header>
+        <h1>حاسبة الاستثمار</h1>
+        <p class="subtitle">احسب نمو استثمارك بسهولة من خلال رأس المال الأولي والاستثمار الشهري ومدة الاستثمار.</p>
+      </header>
+
+      <form id="investmentForm">
+        <label>
+          رأس المال الأولي
+          <input type="number" id="initialCapital" min="0" placeholder="مثال: 10000">
+        </label>
+        <label>
+          الاستثمار الشهري
+          <input type="number" id="monthlyContribution" min="0" placeholder="مثال: 500">
+        </label>
+        <label>
+          مدة الاستثمار (بالسنوات)
+          <input type="number" id="investmentDuration" min="1" placeholder="مثال: 10">
+        </label>
+        <label>
+          نسبة العائد السنوي ٪
+          <input type="number" id="annualRate" min="0" step="0.1" placeholder="مثال: 8" value="8">
+        </label>
+      </form>
+
+      <div class="actions">
+        <button type="button" class="btn-primary" id="calculateBtn">احسب الاستثمار</button>
+        <button type="button" class="btn-secondary" id="downloadCsvBtn" disabled>تحميل النتائج كملف CSV</button>
+      </div>
+
+      <p class="error-message" id="errorMessage" style="display: none;">يرجى إدخال جميع البيانات بشكل صحيح.</p>
+
+      <section class="results" id="resultsSection" style="display: none;">
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">إجمالي المبلغ المستثمر:</span>
+            <span class="summary-value" id="totalInvestedValue">0.00</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">القيمة النهائية للاستثمار:</span>
+            <span class="summary-value" id="finalValue">0.00</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">إجمالي الأرباح (العائد):</span>
+            <span class="summary-value" id="totalInterest">0.00</span>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h2 class="card-title">توزيع الاستثمار</h2>
+          <div class="chart-wrapper">
+            <canvas id="compositionChart" width="320" height="320"></canvas>
+            <div class="chart-legend" id="chartLegend"></div>
+          </div>
+        </div>
+        <div class="table-card" style="grid-column: 1 / -1;">
+          <h2 class="card-title">جدول نمو الاستثمار حسب السنوات</h2>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>السنة</th>
+                  <th>إجمالي المبلغ المساهم حتى هذه السنة</th>
+                  <th>قيمة الاستثمار في نهاية السنة</th>
+                </tr>
+              </thead>
+              <tbody id="yearlyTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Form handling
+    const form = document.getElementById('investmentForm');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const resultsSection = document.getElementById('resultsSection');
+
+    const totalInvestedValueEl = document.getElementById('totalInvestedValue');
+    const finalValueEl = document.getElementById('finalValue');
+    const totalInterestEl = document.getElementById('totalInterest');
+    const yearlyTableBody = document.getElementById('yearlyTableBody');
+    const chartLegend = document.getElementById('chartLegend');
+
+    let compositionChart = null;
+
+    // Calculation logic
+    function calculateInvestment() {
+      const initial = parseFloat(document.getElementById('initialCapital').value);
+      const monthly = parseFloat(document.getElementById('monthlyContribution').value);
+      const years = parseFloat(document.getElementById('investmentDuration').value);
+      let rate = parseFloat(document.getElementById('annualRate').value);
+
+      if (Number.isNaN(rate) || rate < 0) {
+        rate = 8;
+      }
+
+      if (Number.isNaN(initial) || initial < 0 || Number.isNaN(monthly) || monthly < 0 || Number.isNaN(years) || years < 1) {
+        errorMessage.style.display = 'block';
+        resultsSection.style.display = 'none';
+        downloadCsvBtn.disabled = true;
+        return;
+      }
+
+      errorMessage.style.display = 'none';
+
+      const months = Math.round(years * 12);
+      const monthlyRate = rate / 100 / 12;
+      let balance = initial;
+      let totalInvested = initial;
+      const yearlyData = [];
+
+      for (let month = 1; month <= months; month++) {
+        balance *= (1 + monthlyRate);
+        balance += monthly;
+        totalInvested += monthly;
+
+        if (month % 12 === 0) {
+          const year = month / 12;
+          const investedByYear = initial + monthly * month;
+          yearlyData.push({
+            year,
+            totalInvested: investedByYear,
+            value: balance
+          });
+        }
+      }
+
+      const finalValue = balance;
+      const totalInterest = finalValue - totalInvested;
+      const initialCapital = initial;
+      const monthlyContributions = totalInvested - initialCapital;
+      const profit = totalInterest;
+
+      updateSummary(totalInvested, finalValue, totalInterest);
+      renderYearlyTable(yearlyData);
+      renderDonutChart(initialCapital, monthlyContributions, profit);
+
+      resultsSection.style.display = 'grid';
+      downloadCsvBtn.disabled = false;
+
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      return { yearlyData };
+    }
+
+    // Summary display
+    function updateSummary(totalInvested, finalValue, totalInterest) {
+      totalInvestedValueEl.textContent = totalInvested.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      finalValueEl.textContent = finalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      totalInterestEl.textContent = totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Table rendering
+    function renderYearlyTable(yearlyData) {
+      yearlyTableBody.innerHTML = '';
+      yearlyData.forEach((item) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${item.year}</td>
+          <td>${item.totalInvested.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          <td>${item.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        `;
+        yearlyTableBody.appendChild(row);
+      });
+    }
+
+    // Donut chart setup and update
+    function renderDonutChart(initialCapital, monthlyContributions, profit) {
+      const chartData = [initialCapital, monthlyContributions, profit];
+      const labels = ['رأس المال الأولي', 'المساهمات الشهرية', 'الأرباح المحققة'];
+      const colors = ['#3465d9', '#5cc5d9', '#52c29d'];
+
+      if (!compositionChart) {
+        const ctx = document.getElementById('compositionChart').getContext('2d');
+        compositionChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [{
+              data: chartData,
+              backgroundColor: colors,
+              borderWidth: 0,
+              hoverOffset: 16,
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const total = context.dataset.data.reduce((sum, value) => sum + value, 0);
+                    const value = context.parsed;
+                    const percentage = total ? ((value / total) * 100).toFixed(2) : '0.00';
+                    return `${context.label}: ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${percentage}%)`;
+                  }
+                }
+              }
+            },
+            cutout: '60%',
+            layout: {
+              padding: 10
+            }
+          }
+        });
+      } else {
+        compositionChart.data.datasets[0].data = chartData;
+        compositionChart.update();
+      }
+
+      renderLegend(labels, colors, chartData);
+    }
+
+    function renderLegend(labels, colors, data) {
+      chartLegend.innerHTML = '';
+      const total = data.reduce((sum, value) => sum + value, 0);
+      labels.forEach((label, index) => {
+        const percentage = total ? ((data[index] / total) * 100).toFixed(2) : '0.00';
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <span class="legend-dot" style="background:${colors[index]}"></span>
+          <span>${label} - ${percentage}%</span>
+        `;
+        chartLegend.appendChild(item);
+      });
+    }
+
+    // CSV generation and download
+    function downloadCsv(yearlyData) {
+      const headers = ['السنة', 'إجمالي المبلغ المساهم', 'قيمة الاستثمار'];
+      const rows = yearlyData.map((item) => [item.year, item.totalInvested, item.value]);
+      const csvContent = [headers, ...rows].map((row) => row.join(',')).join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'investment-results.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    let latestYearlyData = [];
+
+    calculateBtn.addEventListener('click', () => {
+      const result = calculateInvestment();
+      if (result) {
+        latestYearlyData = result.yearlyData;
+      }
+    });
+
+    downloadCsvBtn.addEventListener('click', () => {
+      if (latestYearlyData.length > 0) {
+        downloadCsv(latestYearlyData);
+      }
+    });
+  </script>
+</body>
+</html>
