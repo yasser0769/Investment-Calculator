@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>حاسبة الاستثمار</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --background: #f6f7fb;
+      --gradient-start: #e0ecff;
+      --gradient-end: #f5e9ff;
+      --card-bg: #ffffff;
+      --text-dark: #1f2742;
+      --muted: #5a6485;
+      --accent: #4b7bec;
+      --accent-dark: #3459a7;
+      --error: #d64550;
+      --border-radius: 22px;
+      --shadow: 0 24px 55px rgba(31, 39, 66, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: radial-gradient(120% 120% at 10% 10%, rgba(75, 123, 236, 0.22), transparent),
+                  radial-gradient(100% 140% at 90% 0%, rgba(111, 66, 193, 0.18), transparent),
+                  linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: var(--text-dark);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 16px;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .calculator-container {
+      width: 100%;
+      max-width: 980px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calculator-container::before {
+      content: '';
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      top: -160px;
+      left: -160px;
+      background: radial-gradient(circle, rgba(75, 123, 236, 0.18), transparent 60%);
+      z-index: 0;
+      pointer-events: none;
+      transform: rotate(-12deg);
+    }
+
+    .calculator-container::after {
+      content: '';
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      bottom: -140px;
+      right: -120px;
+      background: radial-gradient(circle, rgba(111, 66, 193, 0.16), transparent 60%);
+      z-index: 0;
+      pointer-events: none;
+      transform: rotate(18deg);
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 3vw + 1rem, 3rem);
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    p.subtitle {
+      font-size: 1.05rem;
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    form {
+      position: relative;
+      z-index: 1;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(31, 39, 66, 0.12);
+      background: #fdfdff;
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      text-align: right;
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent);
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(75, 123, 236, 0.18);
+    }
+
+    .primary-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 26px;
+      border-radius: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      margin-top: 8px;
+    }
+
+    .primary-button:hover {
+      background: var(--accent-dark);
+      box-shadow: 0 12px 25px rgba(75, 123, 236, 0.26);
+      transform: translateY(-1px);
+    }
+
+    .primary-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 6px 16px rgba(75, 123, 236, 0.18);
+    }
+
+    .error-message {
+      color: var(--error);
+      font-size: 0.9rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .results {
+      margin-top: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, rgba(75, 123, 236, 0.08), rgba(255, 255, 255, 0.9));
+      border-radius: 18px;
+      padding: 24px;
+      border: 1px solid rgba(31, 39, 66, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .summary-card span.label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .summary-card span.value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.7);
+      box-shadow: inset 0 0 0 1px rgba(31, 39, 66, 0.06);
+    }
+
+    thead {
+      background: rgba(75, 123, 236, 0.12);
+    }
+
+    th, td {
+      text-align: right;
+      padding: 16px 20px;
+      font-size: 0.95rem;
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(75, 123, 236, 0.06);
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      min-height: 320px;
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 20px;
+      box-shadow: inset 0 0 0 1px rgba(31, 39, 66, 0.06);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 24px 12px;
+      }
+
+      .calculator-container {
+        padding: 36px 24px;
+      }
+
+      th, td {
+        padding: 12px 14px;
+      }
+
+      .chart-container {
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2.1rem;
+      }
+
+      p.subtitle {
+        font-size: 1rem;
+      }
+
+      .summary-card span.value {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator-container">
+    <header>
+      <h1>حاسبة الاستثمار</h1>
+      <p class="subtitle">احسب القيمة المستقبلية لاستثماراتك مع المساهمات الشهرية وشاهد كيف يعزز التراكم المركب نمو أموالك.</p>
+    </header>
+
+    <form id="investmentForm">
+      <div class="form-grid">
+        <div class="input-group">
+          <label for="initialAmount">قيمة الاستثمار الابتدائية</label>
+          <input type="number" id="initialAmount" name="initialAmount" min="0" placeholder="مثال: 10,000">
+        </div>
+        <div class="input-group">
+          <label for="monthlyContribution">المساهمة الشهرية</label>
+          <input type="number" id="monthlyContribution" name="monthlyContribution" min="0" placeholder="مثال: 500">
+        </div>
+        <div class="input-group">
+          <label for="years">مدة الاستثمار (بالسنوات)</label>
+          <input type="number" id="years" name="years" min="1" placeholder="مثال: 10">
+        </div>
+        <div class="input-group">
+          <label for="rate">معدل الفائدة السنوي (%)</label>
+          <input type="number" id="rate" name="rate" step="0.1" placeholder="مثال: 8" value="8">
+        </div>
+      </div>
+      <button type="submit" class="primary-button">احسب</button>
+      <p class="error-message" id="errorMessage">يرجى إدخال قيم صحيحة في جميع الحقول.</p>
+    </form>
+
+    <section class="results" id="results" hidden>
+      <div class="summary-cards">
+        <div class="summary-card">
+          <span class="label">إجمالي المبلغ المستثمر</span>
+          <span class="value" id="totalInvestedValue">0.00 دولار</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">القيمة النهائية</span>
+          <span class="value" id="finalValue">0.00 دولار</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">إجمالي العائد من الفوائد</span>
+          <span class="value" id="totalInterest">0.00 دولار</span>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>السنة</th>
+              <th>إجمالي الاستثمار حتى السنة</th>
+              <th>قيمة المحفظة</th>
+            </tr>
+          </thead>
+          <tbody id="yearlyTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="investmentChart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // تنسيق الأرقام بصيغة نقدية عربية
+    const formatCurrency = (value) =>
+      value.toLocaleString('ar-EG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const form = document.getElementById('investmentForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const resultsSection = document.getElementById('results');
+    const totalInvestedValue = document.getElementById('totalInvestedValue');
+    const finalValue = document.getElementById('finalValue');
+    const totalInterest = document.getElementById('totalInterest');
+    const yearlyTableBody = document.getElementById('yearlyTableBody');
+
+    let investmentChart;
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      // قراءة المدخلات والتحقق من صحتها
+      const initial = parseFloat(form.initialAmount.value);
+      const monthly = parseFloat(form.monthlyContribution.value);
+      const years = parseInt(form.years.value, 10);
+      const rateInput = form.rate.value === '' ? 8 : parseFloat(form.rate.value);
+
+      if (isNaN(initial) || initial < 0 ||
+          isNaN(monthly) || monthly < 0 ||
+          isNaN(years) || years < 1 ||
+          isNaN(rateInput)) {
+        errorMessage.style.display = 'block';
+        resultsSection.hidden = true;
+        return;
+      }
+
+      errorMessage.style.display = 'none';
+
+      const months = years * 12;
+      const monthlyRate = rateInput / 100 / 12;
+
+      let balance = initial;
+      const yearlyBalances = [];
+      const yearlyInvested = [];
+
+      for (let month = 1; month <= months; month++) {
+        balance *= (1 + monthlyRate);
+        balance += monthly;
+
+        if (month % 12 === 0) {
+          const yearIndex = month / 12;
+          yearlyBalances.push(balance);
+          const investedSoFar = initial + monthly * month;
+          yearlyInvested.push(investedSoFar);
+        }
+      }
+
+      const totalInvested = initial + monthly * months;
+      const finalPortfolioValue = yearlyBalances[yearlyBalances.length - 1] || balance;
+      const totalInterestEarned = finalPortfolioValue - totalInvested;
+
+      // تحديث البطاقات الملخصة
+      totalInvestedValue.textContent = `${formatCurrency(totalInvested)} دولار`;
+      finalValue.textContent = `${formatCurrency(finalPortfolioValue)} دولار`;
+      totalInterest.textContent = `${formatCurrency(totalInterestEarned)} دولار`;
+
+      // إنشاء صفوف الجدول السنوية
+      yearlyTableBody.innerHTML = '';
+      yearlyBalances.forEach((value, index) => {
+        const row = document.createElement('tr');
+        const yearCell = document.createElement('td');
+        const investedCell = document.createElement('td');
+        const valueCell = document.createElement('td');
+
+        yearCell.textContent = index + 1;
+        investedCell.textContent = `${formatCurrency(yearlyInvested[index])} دولار`;
+        valueCell.textContent = `${formatCurrency(value)} دولار`;
+
+        row.append(yearCell, investedCell, valueCell);
+        yearlyTableBody.appendChild(row);
+      });
+
+      // تجهيز بيانات المخطط
+      const labels = yearlyBalances.map((_, index) => index + 1);
+      const data = yearlyBalances;
+
+      const chartData = {
+        labels,
+        datasets: [
+          {
+            label: 'قيمة المحفظة',
+            data,
+            borderColor: 'rgba(75, 123, 236, 1)',
+            backgroundColor: 'rgba(75, 123, 236, 0.16)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      };
+
+      const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        locale: 'ar-EG',
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'السنة',
+              color: varAccentColor(),
+              font: { size: 12, family: 'IBM Plex Sans' }
+            },
+            ticks: {
+              color: '#4d5674',
+              font: { family: 'IBM Plex Sans' }
+            },
+            grid: {
+              color: 'rgba(75, 123, 236, 0.08)'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'قيمة المحفظة (دولار)',
+              color: varAccentColor(),
+              font: { size: 12, family: 'IBM Plex Sans' }
+            },
+            ticks: {
+              color: '#4d5674',
+              font: { family: 'IBM Plex Sans' },
+              callback: (value) => formatCurrency(value)
+            },
+            grid: {
+              color: 'rgba(75, 123, 236, 0.06)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            rtl: true,
+            labels: {
+              color: '#1f2742',
+              font: { family: 'IBM Plex Sans', weight: '500' }
+            }
+          },
+          tooltip: {
+            rtl: true,
+            callbacks: {
+              label: (context) => {
+                const value = context.parsed.y;
+                return `قيمة المحفظة: ${formatCurrency(value)} دولار`;
+              }
+            }
+          }
+        }
+      };
+
+      if (investmentChart) {
+        investmentChart.data = chartData;
+        investmentChart.options = chartOptions;
+        investmentChart.update();
+      } else {
+        const ctx = document.getElementById('investmentChart').getContext('2d');
+        investmentChart = new Chart(ctx, {
+          type: 'line',
+          data: chartData,
+          options: chartOptions
+        });
+      }
+
+      // إظهار النتائج والتمرير بسلاسة إليها
+      resultsSection.hidden = false;
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    function varAccentColor() {
+      return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#4b7bec';
+    }
+  </script>
+</body>
+</html>
