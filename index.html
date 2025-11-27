@@ -393,8 +393,8 @@
       const yearlyData = [];
 
       for (let month = 1; month <= months; month++) {
-        balance *= (1 + monthlyRate);
         balance += monthly;
+        balance *= (1 + monthlyRate);
         totalInvested += monthly;
 
         if (month % 12 === 0) {
