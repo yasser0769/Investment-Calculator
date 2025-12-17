@@ -176,14 +176,16 @@
 
     #downloadCsvBtn::before {
       content: "\2193";
-      font-family: 'IBM Plex Sans Arabic', sans-serif;
-      font-size: 1em;
+      font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', sans-serif;
+      font-size: 0.95em;
       font-weight: 600;
       color: #0f1333;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
     }
 
     .btn-secondary:disabled {
