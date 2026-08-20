@@ -562,6 +562,75 @@
       font-size: 14px;
     }
 
+    .yearly-table-container {
+      margin-top: 24px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-title {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .yearly-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    .yearly-table thead {
+      background: linear-gradient(135deg, var(--primary), #5856D6);
+      color: #ffffff;
+    }
+
+    .yearly-table th {
+      padding: 14px 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .yearly-table tbody tr {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .yearly-table tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .yearly-table tbody tr:hover {
+      background: rgba(0, 122, 255, 0.08);
+      transform: scale(1.01);
+    }
+
+    .yearly-table td {
+      padding: 12px 10px;
+      text-align: center;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .yearly-table tbody tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .yearly-table tbody tr:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
     footer {
       text-align: center;
       color: var(--text-secondary);
@@ -644,6 +713,21 @@
               <button class="btn secondary" data-copy="fv-result">انسخ النتيجة</button>
             </div>
             <div class="summary" id="fv-summary">أدخل بياناتك ثم اضغط احسب.</div>
+            <div class="yearly-table-container" id="fv-table-container" style="display: none;">
+              <h4 class="table-title">التفصيل السنوي</h4>
+              <table class="yearly-table">
+                <thead>
+                  <tr>
+                    <th>السنة</th>
+                    <th>الرصيد أول السنة</th>
+                    <th>الإيداع السنوي</th>
+                    <th>الفائدة المكتسبة</th>
+                    <th>الرصيد نهاية السنة</th>
+                  </tr>
+                </thead>
+                <tbody id="fv-table-body"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -883,6 +967,15 @@
       document.getElementById(`${type}-result`).textContent = '—';
       document.getElementById(`${type}-summary`).textContent = 'أدخل بياناتك ثم اضغط احسب.';
       document.getElementById(`${type}-details`).innerHTML = '';
+      
+      // Hide yearly table for FV panel
+      if (type === 'fv') {
+        const tableContainer = document.getElementById('fv-table-container');
+        if (tableContainer) {
+          tableContainer.style.display = 'none';
+          document.getElementById('fv-table-body').innerHTML = '';
+        }
+      }
     }
 
     function validateNumbers(values, requiredKeys, noticeId) {
@@ -1096,6 +1189,9 @@
           const { fv, N, i } = computeFV({ ...values, timing });
           document.getElementById('fv-result').textContent = formatCurrency(fv);
           document.getElementById('fv-summary').textContent = `سيبلغ رصيدك ${formatCurrency(fv)} بعد ${values.years} سنة.`;
+          
+          // Generate yearly table
+          generateYearlyTable(values.P, values.PMT, values.rate, values.years, 'fv');
           break;
         }
         case 'pv': {
@@ -1146,6 +1242,50 @@
           break;
         }
       }
+    }
+
+    function generateYearlyTable(P, PMT, annualRate, years, prefix) {
+      const tableContainer = document.getElementById(`${prefix}-table-container`);
+      const tableBody = document.getElementById(`${prefix}-table-body`);
+      
+      if (!tableContainer || !tableBody) return;
+      
+      const monthlyRate = annualRate / 100 / 12;
+      let balance = P;
+      let totalDeposits = 0;
+      let totalInterest = 0;
+      
+      let html = '';
+      
+      for (let year = 1; year <= years; year++) {
+        const startBalance = balance;
+        let yearlyDeposit = 0;
+        let yearlyInterest = 0;
+        
+        // Calculate month by month for this year
+        for (let month = 0; month < 12; month++) {
+          const interest = balance * monthlyRate;
+          yearlyInterest += interest;
+          balance += interest + PMT;
+          yearlyDeposit += PMT;
+        }
+        
+        totalDeposits += yearlyDeposit;
+        totalInterest += yearlyInterest;
+        
+        html += `
+          <tr>
+            <td>${year}</td>
+            <td>${formatCurrency(startBalance)}</td>
+            <td>${formatCurrency(yearlyDeposit)}</td>
+            <td>${formatCurrency(yearlyInterest)}</td>
+            <td><strong>${formatCurrency(balance)}</strong></td>
+          </tr>
+        `;
+      }
+      
+      tableBody.innerHTML = html;
+      tableContainer.style.display = 'block';
     }
 
     document.querySelectorAll('[data-action="calculate"]').forEach(btn => {
